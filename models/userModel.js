@@ -54,7 +54,7 @@ userSchema.pre('save', async function (next) {
     if (!this.isModified("password")){
         next()
     }
-    const salt = await bcrypt.genSalt(10)
+    const salt = await bcrypt.genSaltSync(10)
     this.password = await bcrypt.hash(this.password, salt)
     next()
 })
@@ -66,11 +66,12 @@ userSchema.methods.isPasswordMatched = async function(enteredPassword) {
 userSchema.methods.createPasswordResetToken = async function () {
     const resettoken = crypto.randomBytes(32).toString("hex");
     this.passwordResetToken = crypto
-        .createHash('sha256')
-        .update(resettoken)
-        .digest("hex")
-    this.passwordResetExpires=Date.now()+30*60*1000 // 10 minutes
-    return resettoken
-}
+      .createHash("sha256")
+      .update(resettoken)
+      .digest("hex");
+    this.passwordResetExpires = Date.now() + 30 * 60 * 1000; // 10 minutes
+    return resettoken;
+  };
+  
 
 module.exports = mongoose.model('User', userSchema);
