@@ -4,6 +4,7 @@ const slugify = require("slugify")
 const User = require("../models/userModel")
 
 const createProduct = asyncHandler(async(req, res) => {
+    console.log("hello")
     try{
         if (req.body.title){
             req.body.slug = slugify(req.body.title)
@@ -130,11 +131,74 @@ const addToWishList = asyncHandler(async(req, res) => {
     }
 })
 
+const rating = asyncHandler(async(req, res) => {
+    try {
+        const {_id} = req.user
+        const { star, prodId, comment} = req.body
+        const product = await Product.findById(prodId)
+        let alreadyRated = product.ratings.find(
+            (userId) => userId.postedby.toString() === _id.toString()
+        )
+        if (alreadyRated){
+            console.log("helo2")
+            const updateRating = await Product.updateOne({
+                ratings: {$elemMatch: alreadyRated}
+            },{
+                $set: {"ratings.$.star": star, "ratings.$.comment": comment}
+            }, {
+                new: true
+            })
+        }else{
+            console.log("helo3")
+            const rateProduct = await Product.findByIdAndUpdate(prodId, {
+                $push: {
+                    ratings: {
+                        star: star,
+                        comment: comment,
+                        postedby: _id
+                    }
+                }
+            }, {
+                new: true
+            })
+        }
+
+    
+    const getallratings = await Product.findById(prodId)
+    let totalRating = getallratings.ratings.length
+    let ratingsum = getallratings.ratings
+        .map((item) => item.star)
+        .reduce((prev, curr) => prev + curr, 0)
+    console.log(getallratings)
+    let actualRating = Math.round(ratingsum/ totalRating)
+    let finalproduct = await Product.findByIdAndUpdate(
+        prodId,
+        {
+            totalrating: actualRating
+        }, {
+            new: true
+        }
+    )
+    console.log("helo")
+    res.json(finalproduct)
+    }catch(error) {
+
+    }
+    
+})
+
+const uploadImages = asyncHandler(async(req, res) => {
+    console.log(req.files)
+})
+
+
 module.exports = {
     createProduct, 
     getaProduct, 
     getallProducts, 
     updateProduct, 
     deleteProduct,
-    addToWishList
+    addToWishList,
+    rating, 
+    uploadImages
 }
