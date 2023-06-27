@@ -13,9 +13,19 @@ const {
     liketheBlog,
     disliketheBlog,
 } = require("../controller/blogCtrl")
+const { uploadImages } = require("../controller/productCtrl")
+const { uploadPhoto, blogImgResize } = require("../middlewares/uploadImages")
 
 
 router.post("/", authMiddleware, isAdmin, createBlog)
+router.put(
+    "/upload/:id",
+    authMiddleware,
+    isAdmin,
+    uploadPhoto.array('images', 2),
+    blogImgResize,
+    uploadImages
+)
 router.put("/likes", authMiddleware, liketheBlog)
 router.put("/dislikes", authMiddleware, disliketheBlog)
 router.put("/:id", authMiddleware, isAdmin, updateBlog)

@@ -26,6 +26,7 @@ var blogSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    images: [],
     likes: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
