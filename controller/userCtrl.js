@@ -8,6 +8,9 @@ const {generateRefreshToken} = require("../config/refreshtoken")
 const jwt = require("jsonwebtoken")
 const sendEmail = require("./emailCtrl")
 const crypto = require("crypto")
+const Coupon = require("../models/couponModel")
+const Order = require("../models/orderModel")
+const uniqid = require("uniqid")
 
 const createUser = asyncHandler(async (req, res) => {
     const email = req.body.email
@@ -327,6 +330,9 @@ const userCart = asyncHandler(async(req, res) => {
             cartTotal,
             orderBy: user?._id
         }).save()
+        user.cart = newCart
+        await user.save()
+        console.log(user)
         res.json(newCart)
     } catch(error){
         throw new Error (error)
@@ -346,6 +352,114 @@ const getUserCart = asyncHandler(async(req, res) => {
     }
 })
 
+const emptyCart = asyncHandler(async(req, res) => {
+    try{
+    const {_id} = req.user
+    validateMongoDbId(_id)
+    const user = await User.findOne(_id)
+    const cart = await Cart.findOneAndRemove({orderby: user._id})
+    res.json(cart)
+    }catch(error) {
+        throw new Error(error)
+    }
+
+})
+
+const applyCoupon = asyncHandler(async(req, res) => {
+    const {coupon} = req.body
+    const {_id} = req.user
+    const validCoupon = await Coupon.findOne({name: coupon})
+    if (validCoupon === null) {
+        throw new Error ("Invalid Coupon")
+    }
+    const user = await User.findOne({_id})
+    const v = await Cart.findOne({orderBy: user._id})
+    console.log(v, "v")
+    let {cartTotal} = await Cart.findOne({
+        orderby: user._id
+    }).populate("products.product")
+    let totalAfterDiscount = (cartTotal - (cartTotal*validCoupon.discount)/100).toFixed(2)
+    await Cart.findOneAndUpdate({orderby: user._id}, 
+        {totalAfterDiscount},
+        {new: true})
+        res.json(totalAfterDiscount)
+})
+
+const createOrder = asyncHandler(async(req, res) => {
+    try{
+        const { COD, couponApplied} = req.body
+        const {_id} = req.user
+        validateMongoDbId(_id)
+        if(!COD) throw new Error("Create cash order failed")
+        const user = await User.findById(_id)
+        let userCart = await Cart.findOne({orderby: user._id})
+        let finalAmount = 0
+        if(couponApplied && userCart.totalAfterDiscount){
+            finalAmount = userCart.totalAfterDiscount*100
+        } else {
+            finalAmount = userCart.cartTotal*100
+        }
+
+        let newOrder = await new Order({
+            products: userCart.products,
+            paymentIntent:{
+                id: uniqid(),
+                method: "COD",
+                amount: finalAmount,
+                status: "COD",
+                created: Date.now(),
+                currency: "usd"
+            },
+            orderby: user._id,
+            orderStatus: "COD"
+        }).save()
+
+        let update = userCart.products.map((item) => {
+            return {
+                updateOne: {
+                    filter: {_id: item.product._id},
+                    update: {$inc: {quantity: -item.count, sold: +item.count}}
+                }
+            }
+        })
+        const updated = await Product.bulkWrite(update,{})
+        res.json({message: "success"})
+    }
+    catch(error){
+        throw new Error(error)
+    }    
+})
+
+const getOrders = asyncHandler(async(req, res) => {
+    try {
+        const {_id} = req.user
+        validateMongoDbId(_id)
+        const userorders = await Order.findOne({orderby: _id})
+        .populate("products.product")
+        .exec()
+        res.json(userorders)
+    } catch(error){
+        throw new Error(error)
+    }
+})
+
+const updateOrderStatus = asyncHandler(async(req, res) => {
+    try {
+        const {status} = req.body
+        const{_id} = req.params
+        validateMongoDbId(id)
+        const findOrder = await Order.findByIdAndUpdate(
+            id, 
+            { orderStatus: status,
+            paymentIntent: {
+                status: status
+            }}, 
+            {new: true})
+            res.json(findOrder)
+    }catch(error){
+        throw new Error(error)
+    }
+})
 
 module.exports={
     createUser, 
@@ -365,5 +479,10 @@ module.exports={
     getWishList, 
     saveAddress,
     userCart,
-    getUserCart
+    getUserCart,
+    emptyCart, 
+    applyCoupon,
+    createOrder,
+    getOrders, 
+    updateOrderStatus
 }
