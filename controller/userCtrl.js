@@ -13,49 +13,75 @@ const Order = require("../models/orderModel")
 const uniqid = require("uniqid")
 
 const createUser = asyncHandler(async (req, res) => {
-    const email = req.body.email
-    const findUser = await User.findOne({email:email})
-
-    if(!findUser){
-        const newUser = await User.create(req.body)
-        res.json(newUser)
-    }else{
-       throw new Error("User already exists")
+    try {
+      const email = req.body.email;
+      const findUser = await User.findOne({ email: email });
+  
+      if (!findUser) {
+        const newUser = await User.create(req.body);
+        const resp = {
+            firstname: newUser.firstname,
+            lastname: newUser.lastname,
+            email: newUser.email,
+            mobile: newUser.mobile,
+            _id: newUser._id,
+            createdAt: newUser.createdAt,
+            updatedAt: newUser.updatedAt
+        }
+        res.status(201).json(resp);
+      } else {
+        const error = new Error('User already exists');
+        res.status(409).json({ error: error.message });
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
-})
+  });
+  
 
 const loginUserCtrl = asyncHandler(async(req, res)=>{
-    const {email, password} = req.body
-    const findUser = await User.findOne({email:email})
-    if (findUser && (await findUser.isPasswordMatched(password))){
-        const refreshToken = await generateRefreshToken(findUser?._id)
-        const updateuser = await User.findByIdAndUpdate(findUser.id, {
-            refreshToken: refreshToken
-        }, {
-            new:true
-        })
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            maxAge: 72*60*60*1000
-        })
-        res.json({
-            _id: findUser?._id,
-            firstname: findUser?.firstname,
-            lastname: findUser?.lastname,
-            email: findUser?.email,
-            mobile: findUser?.mobile,
-            token: generateToken(findUser?._id)
-        })
-    }else{
-        throw new Error("invalid credentials")
-    }
+    try{
+        const {email, password} = req.body
+        const findUser = await User.findOne({email:email})
+        if (findUser && (await findUser.isPasswordMatched(password))){
+            const refreshToken = await generateRefreshToken(findUser?._id)
+            const updateuser = await User.findByIdAndUpdate(findUser.id, {
+                refreshToken: refreshToken
+            }, {
+                new:true
+            })
+            res.cookie("refreshToken", refreshToken, {
+                httpOnly: true,
+                maxAge: 72*60*60*1000
+            })
+            res.status(200).json({
+                _id: findUser?._id,
+                firstname: findUser?.firstname,
+                lastname: findUser?.lastname,
+                email: findUser?.email,
+                mobile: findUser?.mobile,
+                token: generateToken(findUser?._id)
+            })
+        }else{
+            const error =  new Error("invalid credentials")
+            res.status(401).json({error: error.message})
+        }
+} catch (error) {
+    res.status(500).json({ error: error.message }); 
+}
 })
 
 // Login the admin
 const loginAdmin = asyncHandler(async(req, res)=>{
+    try{
     const {email, password} = req.body
     const findAdmin = await User.findOne({email:email})
-    if (findAdmin.role !== "admin") throw new Error("Not Authorised")
+    if (findAdmin.role !== "admin") {
+        const error =  new Error("Not Authorised")
+        res.status(401).json({error: error.message})
+        return 
+
+    }
     if (findAdmin && (await findAdmin.isPasswordMatched(password))){
         const refreshToken = await generateRefreshToken(findAdmin?._id)
         const updateuser = await User.findByIdAndUpdate(findAdmin.id, {
@@ -67,7 +93,7 @@ const loginAdmin = asyncHandler(async(req, res)=>{
             httpOnly: true,
             maxAge: 72*60*60*1000
         })
-        res.json({
+        res.status(200).json({
             _id: findAdmin?._id,
             firstname: findAdmin?.firstname,
             lastname: findAdmin?.lastname,
@@ -76,7 +102,11 @@ const loginAdmin = asyncHandler(async(req, res)=>{
             token: generateToken(findAdmin?._id)
         })
     }else{
-        throw new Error("invalid credentials")
+        const error =  new Error("Invaid Crendentials")
+        res.status(401).json({error: error.message})
+    }}
+    catch (error) {
+        res.status(500).json({ error: error.message }); 
     }
 })
 
@@ -95,10 +125,10 @@ const saveAddress = asyncHandler(async(req, res) => {
             new:true
         }
         )
-        res.json(updatedUser)
+        res.status(200).json({address: updatedUser.address, _id: updatedUser._id, message: "Updated address successfully"})
 
     } catch(error){
-        throw new Error(error)
+        res.status(500).json({ error: error.message }); 
     }
 })
 
@@ -219,11 +249,11 @@ const blockUser = asyncHandler(async(req, res) => {
         }, {
             new:true
         })
-        res.json({
+        res.status(200).json({
             message: "User blocked"
         })
     }catch(error){
-        throw new Error(error)
+        res.status(500).json({ error: error.message }); 
     }
 })
 
@@ -236,11 +266,11 @@ const unblockUser = asyncHandler(async(req, res) => {
         }, {
             new:true
         })
-        res.json({
+        res.status(200).json({
             message:"user unblocked"
         })
     } catch(error){
-        throw new Error(error)
+        res.status(500).json({ error: error.message }); 
     }
     
 
