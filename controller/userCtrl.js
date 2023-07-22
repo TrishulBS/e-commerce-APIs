@@ -136,7 +136,7 @@ const getWishList = asyncHandler(async(req, res) => {
     const { _id} = req.user
     try {
         const findUser = await User.findById(_id).populate('wishlist')
-        res.json(findUser)
+        res.json(findUser.wishlist)
     }catch(error){
         throw new Error(error)
     }
@@ -148,15 +148,17 @@ const handleRefreshToken = asyncHandler(async(req, res)=> {
     const cookie = req.cookies
     if(!cookie?.refreshToken) throw new Error ("No refreshToken in cookies")
     const refreshToken = cookie.refreshToken
-    console.log(refreshToken)
     const user = await User.findOne({refreshToken})
-    if (!user) throw new Error("No refresh token present in db or not matched")
+    if (!user) {
+        const error =  new Error("No refresh token present in db or not matched")
+        res.status(404).json({error: error.message})
+    }
     jwt.verify(refreshToken, process.env.JWT_SECRET, (err, decoded) => {
         if (err || user.id !== decoded.id) {
             throw new Error("There is something wrong with refresh token")
         }
         const accessToken = generateToken(user?._id)
-        res.json({accessToken})
+        res.status(200).json({accessToken})
     })
 })
 
@@ -406,13 +408,13 @@ const applyCoupon = asyncHandler(async(req, res) => {
     const v = await Cart.findOne({orderBy: user._id})
     console.log(v, "v")
     let {cartTotal} = await Cart.findOne({
-        orderby: user._id
+        orderBy: user._id
     }).populate("products.product")
     let totalAfterDiscount = (cartTotal - (cartTotal*validCoupon.discount)/100).toFixed(2)
     await Cart.findOneAndUpdate({orderby: user._id}, 
         {totalAfterDiscount},
         {new: true})
-        res.json(totalAfterDiscount)
+        res.json({newTotal:totalAfterDiscount})
 })
 
 const createOrder = asyncHandler(async(req, res) => {
