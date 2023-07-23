@@ -1,5 +1,6 @@
 const bodyParser = require("body-parser")
 const express = require('express')
+const serverless = require('serverless-http')
 const app = express()
 const dotenv = require('dotenv').config()
 const PORT = process.env.PORT || 4000
@@ -40,8 +41,11 @@ const options = {
         },
         servers: [
             {
-                url: "http://localhost:5000/"
+                url: "https://6ijbir840a.execute-api.us-west-1.amazonaws.com/dev/"
             },
+            {
+                url: "http://localhost:5000/"
+            }
         ],
         components: {
             securitySchemes: {
@@ -70,7 +74,10 @@ app.use(
     swaggerui.setup(spacs)
 )
 
-
+app.get("/hello",( req, res) => {
+    res.json({hello: "hello world"})
+    
+})
 app.use("/api/user", authRouter)
 app.use("/api/product", productRouter)
 app.use("/api/blog", blogRouter)
@@ -84,6 +91,8 @@ app.use(errorHandler)
 
 
 
-app.listen(PORT, () => {
-    console.log(`Server is running at PORT ${PORT}`)
-})
+// app.listen(PORT, () => {
+//     console.log(`Server is running at PORT ${PORT}`)
+// })
+
+module.exports = app

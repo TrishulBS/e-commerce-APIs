@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const bcrypt = require('bcrypt')
+const bcryptjs = require('bcryptjs')
 const crypto = require("crypto")
 
 var userSchema = new mongoose.Schema({
@@ -56,13 +56,13 @@ userSchema.pre('save', async function (next) {
     if (!this.isModified("password")){
         next()
     }
-    const salt = await bcrypt.genSaltSync(10)
-    this.password = await bcrypt.hash(this.password, salt)
+    const salt = await bcryptjs.genSaltSync(10)
+    this.password = await bcryptjs.hash(this.password, salt)
     next()
 })
 
 userSchema.methods.isPasswordMatched = async function(enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password)
+    return await bcryptjs.compare(enteredPassword, this.password)
 }
 
 userSchema.methods.createPasswordResetToken = async function () {
