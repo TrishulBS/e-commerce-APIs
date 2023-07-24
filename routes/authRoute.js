@@ -388,45 +388,67 @@ router.post("/cart", authMiddleware, userCart)
  *       400:
  *         description: Bad Request
  */
-
-/**
- * @openapi
- * /api/user/applycoupon:
- *   post:
- *     tags:
- *       - User
- *     summary: Apply Discount Coupon to the order
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               coupon:
- *                 type: string
- *                  
-
- *     responses:
- *       200:
- *         description: Return user orders
- *         content: 
- *           application/json:
- *             schema: 
- *               type: object
- *               properties:
- *                 accessToken:
- *                   type: string
- *       404:
- *         description: No refresh token in cookie
- *       400:
- *         description: Bad Request
- */
 router.post("/cart/applycoupon", authMiddleware, applyCoupon)
 router.post("/cart/cash-order", authMiddleware, createOrder)
 router.put("/reset-password/:token", resetPassword);
 router.put("/password", authMiddleware, updatePassword)
 router.put("/update-order/:id", authMiddleware, isAdmin, updateOrderStatus)
+
+/**
+ * @openapi
+ * /api/all-users:
+ *   get:
+ *     tags:
+ *       - User
+ *     summary: Get all users by Admin
+ *     requestBody:
+ *       required: false
+ *     responses:
+ *       200:
+ *         description: Requested user returned successfully
+ *         content: 
+ *           application/json:
+ *             schema: 
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                   firstname:
+ *                     type: string
+ *                   lastname:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                     format: email
+ *                   mobile:
+ *                     type: string
+ *                   password:
+ *                     type: string
+ *                   role:
+ *                     type: string
+ *                   isBlocked:
+ *                     type: boolean
+ *                   wishlist:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     example: []
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *                   __v:
+ *                     type: integer
+ *       409:
+ *         description: Conflict
+ *       400:
+ *         description: Bad Request
+ */
+
 router.get("/all-users", getallUser)
 
 /**
