@@ -24,35 +24,10 @@ const router = express.Router();
  *             type: object
  *             required:
  *               - title
- *               - description
- *               - price
- *               - quantity
- *               - color
- *               - brand
- *               - category
  *             properties:
  *               title:
  *                 type: string
- *                 default: Watch
- *               description:
- *                 type: string
- *                 default: Digital watch from lenevo
- *               price:
- *                 type: string
- *                 default: 100
- *               quantity:
- *                 type: string
- *                 default: 1000
- *               color:
- *                 type: string
- *                 default: white
- *               brand:
- *                 type: string
- *                 default: Lenevo
- *               category:
- *                 type: string
- *                 default: Watch
- *              
+ *                 default: Apple          
  *     responses:
  *       201:
  *         description: New Brand is created
@@ -61,27 +36,8 @@ const router = express.Router();
  *             schema: 
  *               type: object
  *               properties:
- *                title:
- *                 type: string
- *                 default: Watch
- *                description:
- *                 type: string
- *                 default: Digital watch from lenevo
- *                price:
- *                 type: string
- *                 default: 100
- *                quantity:
- *                 type: string
- *                 default: 1000
- *                color:
- *                 type: string
- *                 default: white
- *                brand:
- *                 type: string
- *                 default: Lenevo
- *                category:
- *                 type: string
- *                 default: Watch
+ *                 title:
+ *                   type: string
  *                 _id:
  *                   type: string
  *                 createdAt:
